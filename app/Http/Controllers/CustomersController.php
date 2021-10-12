@@ -12,9 +12,20 @@ class CustomersController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index($id = false)
     {
-        //
+        if ($id) {
+            $users = User::find($id);
+            $users->storage_path = url("/storage/");
+        }else {
+            $users = User::all();
+        }
+        
+        return response()->json([
+            'success' => true,
+            'message' =>'berhasil mendapatkan data user',
+            'data'    => $users
+        ], 200);
     }
 
     /**
@@ -38,7 +49,7 @@ class CustomersController extends Controller
         $rules = [
             'name' => 'required',
             'contact' => 'required',
-            'email' => 'required|unique:users',
+            'email' => 'required|unique:users|email:rfc,dns',
             'address' => 'required',
             'discount_amount' => 'required|integer',
             'discount_type' => 'required',
@@ -46,18 +57,19 @@ class CustomersController extends Controller
         ];
         $validator = validation_request($request,$rules);
         if(!$validator->success) return response()->json($validator,422);
+        // dd($request->contact);
+        // return response()->json(["errors"=>[["param"=>"njok","msg"=>$request->contact]]],422);
+        
+        $customer = new User;
+        $customer->name = $request->input('name');
+        $customer->contact = $request->contact;
+        $customer->email = $request->input('email');
+        $customer->address = $request->input('address');
+        $customer->discount_amount = $request->input('discount_amount');
+        $customer->discount_type = $request->input('discount_type');
+        $customer->ktp = $request->input('ktp');
 
-        $customer = User::create([
-            'name'     => $request->input('name'),
-            'contact'   => $request->input('contact'),
-            'email'   => $request->input('email'),
-            'address'   => $request->input('address'),
-            'discount_amount'   => $request->input('discount_amount'),
-            'discount_type'   => $request->input('discount_type'),
-            'ktp'   => $request->input('ktp'),
-        ]);
-
-        if ($customer) {
+        if ($customer->save()) {
             return response()->json([
                 'success' => true,
                 'message' => 'customer Berhasil Disimpan!',
@@ -145,7 +157,12 @@ class CustomersController extends Controller
      */
     public function destroy($id)
     {
-        //
+        if($user = User::find($id)){
+            remove_file($user->ktp);
+            $user->delete();
+            return response()->json(['message'=>'success']);
+        }
+        return response()->json(['message'=>'failed'],501);
     }
 
     function upload_ktp(Request $request, $user_id=null)
@@ -166,7 +183,7 @@ class CustomersController extends Controller
 
         if ($request->remove) {
             $request->request->add(['path'=>$request->remove]);
-            $this->remove_image($request);
+            $this->remove_ktp($request);
         }
         
         return response()->json([

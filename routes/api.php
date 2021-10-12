@@ -32,11 +32,13 @@ Route::prefix('customers')->group(function ()
 {
     Route::post('/',[CustomersController::class,'store']);
     Route::get('/{item_id?}',[CustomersController::class,'index']);
+    Route::post('delete/{item_id?}',[CustomersController::class,'destroy']);
+    Route::post('update/{item_id?}',[CustomersController::class,'update']);
 
-    Route::prefix('image')->group(function ()
+    Route::prefix('ktp')->group(function ()
     {
-        Route::post('upload/{item_id?}',[CustomersController::class,'upload_image']);
-        Route::post('remove/{item_id?}',[CustomersController::class,'remove_image']);
+        Route::post('upload/{item_id?}',[CustomersController::class,'upload_ktp']);
+        Route::post('remove/{item_id?}',[CustomersController::class,'remove_ktp']);
     });
 });
 
