@@ -123,9 +123,6 @@ class ItemsController extends Controller
         $uploaded = upload_file($request->file('image'),$path);
         if ($item_id) {
             $item = Item::findOrFail($item_id);
-            // $images = json_decode($item->images);
-            // array_push($images,$uploaded);
-            // $item->images = json_encode($images);
             $item->images = $uploaded;
             $item->save();
         }

@@ -37,34 +37,38 @@ class CustomersController extends Controller
     {
         $rules = [
             'name' => 'required',
-            'unit' => 'required',
-            'stock' => 'required|integer',
-            'unit_price' => 'required|integer',
-            'image' => 'required',
-    ];
-    $validator = validation_request($request,$rules);
-    if(!$validator->success) return response()->json($validator,422);
+            'contact' => 'required',
+            'email' => 'required|unique:users',
+            'address' => 'required',
+            'discount_amount' => 'required|integer',
+            'discount_type' => 'required',
+            'ktp' => 'required',
+        ];
+        $validator = validation_request($request,$rules);
+        if(!$validator->success) return response()->json($validator,422);
 
-    $item = Item::create([
-        'name'     => $request->input('name'),
-        'unit'   => $request->input('unit'),
-        'stock'   => $request->input('stock'),
-        'unit_price'   => $request->input('unit_price'),
-        'images'   => $request->input('image'),
-    ]);
+        $customer = User::create([
+            'name'     => $request->input('name'),
+            'contact'   => $request->input('contact'),
+            'email'   => $request->input('email'),
+            'address'   => $request->input('address'),
+            'discount_amount'   => $request->input('discount_amount'),
+            'discount_type'   => $request->input('discount_type'),
+            'ktp'   => $request->input('ktp'),
+        ]);
 
-    if ($item) {
-        return response()->json([
-            'success' => true,
-            'message' => 'item Berhasil Disimpan!',
-            'data' => $item
-        ], 201);
-    } else {
-        return response()->json([
-            'success' => false,
-            'message' => 'item Gagal Disimpan!',
-        ], 400);
-    }
+        if ($customer) {
+            return response()->json([
+                'success' => true,
+                'message' => 'customer Berhasil Disimpan!',
+                'data' => $customer
+            ], 201);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'customer Gagal Disimpan!',
+            ], 400);
+        }
     }
 
     /**
@@ -98,7 +102,39 @@ class CustomersController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $rules = [
+            'name' => 'required',
+            'contact' => 'required',
+            'email' => 'required|unique:users',
+            'address' => 'required',
+            'discount_amount' => 'required|integer',
+            'discount_type' => 'required',
+        ];
+        $validator = validation_request($request,$rules);
+        if(!$validator->success) return response()->json($validator,422);
+
+        $customer = User::where('id',$id)->update([
+            'name'     => $request->input('name'),
+            'contact'   => $request->input('contact'),
+            'email'   => $request->input('email'),
+            'address'   => $request->input('address'),
+            'discount_amount'   => $request->input('discount_amount'),
+            'discount_type'   => $request->input('discount_type'),
+            'ktp'   => $request->input('ktp'),
+        ]);
+
+        if ($customer) {
+            return response()->json([
+                'success' => true,
+                'message' => 'customer Berhasil Disimpan!',
+                'data' => $customer
+            ], 201);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'customer Gagal Disimpan!',
+            ], 400);
+        }
     }
 
     /**
@@ -110,5 +146,47 @@ class CustomersController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    function upload_ktp(Request $request, $user_id=null)
+    {
+        $rules = [
+            'image' => 'required|image',
+        ];
+        $validator = validation_request($request,$rules);
+        if(!$validator->success) return response()->json($validator,422);
+
+        $path = "ktp_files";
+        $uploaded = upload_file($request->file('image'),$path);
+        if ($user_id) {
+            $item = User::findOrFail($user_id);
+            $item->ktp = $uploaded;
+            $item->save();
+        }
+
+        if ($request->remove) {
+            $request->request->add(['path'=>$request->remove]);
+            $this->remove_image($request);
+        }
+        
+        return response()->json([
+            'success' => true,
+            'message' => $uploaded ? 'ktp berhasil diupload!' : 'ktp gagal diupload!',
+            'path'    => $uploaded
+        ], $uploaded ? 200 : 400);
+    }
+
+    function remove_ktp(Request $request, $user_id=null)
+    {
+        $rules = [
+            'path' => 'required',
+        ];
+        $validator = validation_request($request,$rules);
+        if(!$validator->success) return response()->json($validator,422);
+
+        return response()->json([
+            'success' => true,
+            'message' => remove_file($request->path) ? 'success' : 'failed'
+        ], 200);
     }
 }
